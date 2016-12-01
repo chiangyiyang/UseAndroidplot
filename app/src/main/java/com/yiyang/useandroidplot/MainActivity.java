@@ -1,6 +1,7 @@
 package com.yiyang.useandroidplot;
 
 import android.content.Intent;
+
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -15,13 +16,24 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Button btnSimpleXYPlot = (Button) findViewById(R.id.btnSimpleXYPlot);
-        Button btnOrientationSensor = (Button) findViewById(R.id.btnOrientationSensor);
         btnSimpleXYPlot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, SimpleXYPlotActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
+        Button btnOrientationSensor = (Button) findViewById(R.id.btnOrientationSensor);
+        btnOrientationSensor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this, OrientationSensorActivity.class);
                 startActivity(intent);
 
             }

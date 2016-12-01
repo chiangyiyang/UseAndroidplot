@@ -16,6 +16,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".SimpleXYPlotActivity"></activity>
+        <activity
+            android:name=".OrientationSensorActivity"
+            android:screenOrientation="landscape"></activity>
     </application>
 
 </manifest>
