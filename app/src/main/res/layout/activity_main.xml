@@ -5,16 +5,22 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.yiyang.useandroidplot.MainActivity">
+    tools:context="com.yiyang.useandroidplot.MainActivity"
+    android:orientation="vertical">
 
-    <com.androidplot.xy.XYPlot
-        style="@style/APDefacto.Dark"
-        android:id="@+id/plot"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        ap:title="A Simple XY Plot"
-        ap:rangeTitle="range"
-        ap:domainTitle="domain"
-        ap:lineLabels="left|bottom"
-        ap:lineLabelRotationBottom="-45" />
+
+    <Button
+        android:text="Simple Chart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnSimpleXYPlot"
+        android:layout_weight="1" />
+
+    <Button
+        android:text="Orientation Sensor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnOrientationSensor"
+        android:layout_weight="1" />
+
 </LinearLayout>
