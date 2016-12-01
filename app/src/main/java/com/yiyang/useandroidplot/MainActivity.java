@@ -153,7 +153,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         BarRenderer barRenderer = aprLevelsPlot.getRenderer(BarRenderer.class);
         if(barRenderer != null) {
             // make our bars a little thicker than the default so they can be seen better:
-            barRenderer.setBarWidth(25);
+            barRenderer.setBarWidth(100);
+            barRenderer.setStyle(BarRenderer.Style.SIDE_BY_SIDE);
         }
 
         // register for orientation sensor events:
