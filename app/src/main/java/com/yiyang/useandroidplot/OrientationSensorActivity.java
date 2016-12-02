@@ -231,37 +231,49 @@ public class OrientationSensorActivity extends AppCompatActivity implements Sens
             mGeomagnetic = sensorEvent.values;
 
         if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                // orientation contains: azimut, pitch and roll
+                float azimut = (float)(orientation[0] / Math.PI * 180);
+                float pitch = (float)(orientation[1] / Math.PI * 180);
+                float roll = (float)(orientation[2] / Math.PI * 180);
 
-            // update level data:
-            aLvlSeries.setModel(Arrays.asList(
-                    new Number[]{mGeomagnetic[0]}),
-                    SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+                // update level data:
+                aLvlSeries.setModel(Arrays.asList(
+                        new Number[]{azimut}),
+                        SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
 
-            pLvlSeries.setModel(Arrays.asList(
-                    new Number[]{mGravity[0]}),
-                    SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+                pLvlSeries.setModel(Arrays.asList(
+                        new Number[]{pitch}),
+                        SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
 
-            rLvlSeries.setModel(Arrays.asList(
-                    new Number[]{mGravity[1]}),
-                    SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+                rLvlSeries.setModel(Arrays.asList(
+                        new Number[]{roll}),
+                        SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
 
-            // get rid the oldest sample in history:
-            if (rollHistorySeries.size() > HISTORY_SIZE) {
-                rollHistorySeries.removeFirst();
-                pitchHistorySeries.removeFirst();
-                azimuthHistorySeries.removeFirst();
+                // get rid the oldest sample in history:
+                if (rollHistorySeries.size() > HISTORY_SIZE) {
+                    rollHistorySeries.removeFirst();
+                    pitchHistorySeries.removeFirst();
+                    azimuthHistorySeries.removeFirst();
+                }
+
+                // add the latest history sample:
+                azimuthHistorySeries.addLast(null, azimut);
+                pitchHistorySeries.addLast(null, pitch);
+                rollHistorySeries.addLast(null, roll);
+
+                mGravity = null;
+                mGeomagnetic = null;
             }
-
-            // add the latest history sample:
-            azimuthHistorySeries.addLast(null, mGeomagnetic[0]);
-            pitchHistorySeries.addLast(null, mGravity[0]);
-            rollHistorySeries.addLast(null, mGravity[1]);
-
-            mGravity = null;
-            mGeomagnetic = null;
         }
 
     }
+
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
