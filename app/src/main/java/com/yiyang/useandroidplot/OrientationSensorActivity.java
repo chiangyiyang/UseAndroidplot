@@ -238,9 +238,9 @@ public class OrientationSensorActivity extends AppCompatActivity implements Sens
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
                 // orientation contains: azimut, pitch and roll
-                float azimut = (float)(orientation[0] / Math.PI * 180);
-                float pitch = (float)(orientation[1] / Math.PI * 180);
-                float roll = (float)(orientation[2] / Math.PI * 180);
+                float azimut = (float) (orientation[0] / Math.PI * 180);   //The range of values is -π to π.
+                float pitch = (float) (orientation[1] / Math.PI * 180);    //The range of values is -π to π.
+                float roll = (float) (orientation[2] / Math.PI * 180);     //The range of values is -π/2 to π/2
 
                 // update level data:
                 aLvlSeries.setModel(Arrays.asList(
