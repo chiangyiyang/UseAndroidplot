@@ -1,13 +1,12 @@
 package com.yiyang.useandroidplot;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -27,10 +26,10 @@ import com.androidplot.xy.XYPlot;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 
-public class OrientationSensorActivity extends AppCompatActivity  implements SensorEventListener {
+public class OrientationSensorActivity extends AppCompatActivity implements SensorEventListener {
     private static final int HISTORY_SIZE = 1000;
     private SensorManager sensorMgr = null;
-    private Sensor orSensor = null;
+//    private Sensor orSensor = null;
 
     private XYPlot aprLevelsPlot = null;
     private XYPlot aprHistoryPlot = null;
@@ -46,6 +45,10 @@ public class OrientationSensorActivity extends AppCompatActivity  implements Sen
     private SimpleXYSeries rollHistorySeries = null;
 
     private Redrawer redrawer;
+    private Sensor accSensor = null;
+    private Sensor magSensor = null;
+    private float[] mGravity = null;
+    private float[] mGeomagnetic = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +110,7 @@ public class OrientationSensorActivity extends AppCompatActivity  implements Sen
                 new LineAndPointFormatter(
                         Color.rgb(200, 100, 100), null, null, null));
         aprHistoryPlot.setDomainStepMode(StepMode.INCREMENT_BY_VAL);
-        aprHistoryPlot.setDomainStepValue(HISTORY_SIZE/10);
+        aprHistoryPlot.setDomainStepValue(HISTORY_SIZE / 10);
         aprHistoryPlot.setLinesPerRangeLabel(3);
         aprHistoryPlot.setDomainLabel("Sample Index");
         aprHistoryPlot.getDomainTitle().pack();
@@ -130,7 +133,7 @@ public class OrientationSensorActivity extends AppCompatActivity  implements Sen
         hwAcceleratedCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if(b) {
+                if (b) {
                     aprLevelsPlot.setLayerType(View.LAYER_TYPE_NONE, null);
                     aprHistoryPlot.setLayerType(View.LAYER_TYPE_NONE, null);
                 } else {
@@ -151,27 +154,42 @@ public class OrientationSensorActivity extends AppCompatActivity  implements Sen
 
         // get a ref to the BarRenderer so we can make some changes to it:
         BarRenderer barRenderer = aprLevelsPlot.getRenderer(BarRenderer.class);
-        if(barRenderer != null) {
+        if (barRenderer != null) {
             // make our bars a little thicker than the default so they can be seen better:
             barRenderer.setBarWidth(100);
             barRenderer.setStyle(BarRenderer.Style.SIDE_BY_SIDE);
         }
 
-        // register for orientation sensor events:
-        sensorMgr = (SensorManager) getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
-        for (Sensor sensor : sensorMgr.getSensorList(Sensor.TYPE_ORIENTATION)) {
-            if (sensor.getType() == Sensor.TYPE_ORIENTATION) {
-                orSensor = sensor;
-            }
-        }
 
-        // if we can't access the orientation sensor then exit:
-        if (orSensor == null) {
+//        // register for orientation sensor events:
+//        sensorMgr = (SensorManager) getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
+//        for (Sensor sensor : sensorMgr.getSensorList(Sensor.TYPE_ORIENTATION)) {
+//            if (sensor.getType() == Sensor.TYPE_ORIENTATION) {
+//                orSensor = sensor;
+//            }
+//        }
+//
+//        // if we can't access the orientation sensor then exit:
+//        if (orSensor == null) {
+//            System.out.println("Failed to attach to orSensor.");
+//            cleanup();
+//        }
+//
+//        sensorMgr.registerListener(this, orSensor, SensorManager.SENSOR_DELAY_UI);
+
+        // register for ACCELEROMETER and MAGNETIC_FIELD sensor events:
+        sensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accSensor = sensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magSensor = sensorMgr.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
+        // if we can't access the sensors then exit:
+        if (accSensor == null || magSensor == null) {
             System.out.println("Failed to attach to orSensor.");
             cleanup();
         }
+        sensorMgr.registerListener(this, accSensor, SensorManager.SENSOR_DELAY_UI);
+        sensorMgr.registerListener(this, magSensor, SensorManager.SENSOR_DELAY_UI);
 
-        sensorMgr.registerListener(this, orSensor, SensorManager.SENSOR_DELAY_UI);
 
         redrawer = new Redrawer(
                 Arrays.asList(new Plot[]{aprHistoryPlot, aprLevelsPlot}),
@@ -206,31 +224,43 @@ public class OrientationSensorActivity extends AppCompatActivity  implements Sen
     // Called whenever a new orSensor reading is taken.
     @Override
     public synchronized void onSensorChanged(SensorEvent sensorEvent) {
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = sensorEvent.values;
 
-        // update level data:
-        aLvlSeries.setModel(Arrays.asList(
-                new Number[]{sensorEvent.values[0]}),
-                SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = sensorEvent.values;
 
-        pLvlSeries.setModel(Arrays.asList(
-                new Number[]{sensorEvent.values[1]}),
-                SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+        if (mGravity != null && mGeomagnetic != null) {
 
-        rLvlSeries.setModel(Arrays.asList(
-                new Number[]{sensorEvent.values[2]}),
-                SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+            // update level data:
+            aLvlSeries.setModel(Arrays.asList(
+                    new Number[]{mGeomagnetic[0]}),
+                    SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
 
-        // get rid the oldest sample in history:
-        if (rollHistorySeries.size() > HISTORY_SIZE) {
-            rollHistorySeries.removeFirst();
-            pitchHistorySeries.removeFirst();
-            azimuthHistorySeries.removeFirst();
+            pLvlSeries.setModel(Arrays.asList(
+                    new Number[]{mGravity[0]}),
+                    SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+
+            rLvlSeries.setModel(Arrays.asList(
+                    new Number[]{mGravity[1]}),
+                    SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
+
+            // get rid the oldest sample in history:
+            if (rollHistorySeries.size() > HISTORY_SIZE) {
+                rollHistorySeries.removeFirst();
+                pitchHistorySeries.removeFirst();
+                azimuthHistorySeries.removeFirst();
+            }
+
+            // add the latest history sample:
+            azimuthHistorySeries.addLast(null, mGeomagnetic[0]);
+            pitchHistorySeries.addLast(null, mGravity[0]);
+            rollHistorySeries.addLast(null, mGravity[1]);
+
+            mGravity = null;
+            mGeomagnetic = null;
         }
 
-        // add the latest history sample:
-        azimuthHistorySeries.addLast(null, sensorEvent.values[0]);
-        pitchHistorySeries.addLast(null, sensorEvent.values[1]);
-        rollHistorySeries.addLast(null, sensorEvent.values[2]);
     }
 
     @Override
